@@ -1,10 +1,13 @@
-def get_choice(options: dict) -> str:
+def get_choice(options: dict, freeform: bool = False) -> str:
     while True:
-        user_input = input("> ").strip().lower()
-        if user_input in options:
-            return user_input
-        if user_input == "stats":
+        raw = input("> ").strip()
+        lowered = raw.lower()
+        if lowered in options:
+            return lowered
+        if lowered == "stats":
             return "stats"
+        if freeform and raw:
+            return raw
         print("  Invalid choice. Try one of the options above.")
 
 

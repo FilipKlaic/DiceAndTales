@@ -9,8 +9,9 @@ import ui.input_handler as input_handler
 
 
 class GameEngine:
-    def __init__(self, character: Character):
+    def __init__(self, character: Character, narrator=None):
         self.character = character
+        self.narrator = narrator
         self.current_scene = "tavern_entrance"
         self.last_action = f"Started adventure as {character.name}"
 
@@ -38,11 +39,16 @@ class GameEngine:
                 self.current_scene = "restart"
                 continue
 
-            display.print_options(scene.options)
-            choice = input_handler.get_choice(scene.options)
+            freeform = self.narrator is not None
+            display.print_options(scene.options, freeform=freeform)
+            choice = input_handler.get_choice(scene.options, freeform=freeform)
 
             if choice == "stats":
                 display.print_character_sheet(self.character)
+                continue
+
+            if freeform and choice not in scene.options:
+                self._handle_freeform(scene, choice)
                 continue
 
             self.last_action = f"Chose: {choice}"
@@ -75,6 +81,12 @@ class GameEngine:
         result_text = "success" if success else "fail"
         self.last_action = f"{check.stat.upper()} check ({total} vs DC {check.dc}) — {result_text}"
         self.current_scene = check.success_scene if success else check.fail_scene
+
+    def _handle_freeform(self, scene, action: str):
+        print()
+        self.narrator.narrate(scene.description, self.character, action)
+        self.last_action = f">> {action[:60]}"
+        input("\nPress Enter to continue...")
 
     def _handle_restart(self):
         display.clear("Game Over")

@@ -1,5 +1,6 @@
 from core.character import CharacterClass, Race, create_character
 from game.engine import GameEngine
+from game.narrator import Narrator
 import ui.display as display
 from ui.input_handler import get_text, get_numbered_choice
 
@@ -32,7 +33,13 @@ def create_new_character():
 
 def main():
     character = create_new_character()
-    engine = GameEngine(character)
+    narrator = Narrator()
+    if not narrator.available:
+        print("\nNote: ANTHROPIC_API_KEY not set — freeform storytelling disabled.")
+        print("Set it to type your own actions and have the story respond.\n")
+        input("Press Enter to start the adventure...")
+        narrator = None
+    engine = GameEngine(character, narrator)
     engine.run()
 
 

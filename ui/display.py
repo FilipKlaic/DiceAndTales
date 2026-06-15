@@ -1,4 +1,5 @@
 import os
+import random
 import time
 
 from core.character import Character, stat_modifier
@@ -13,23 +14,44 @@ def clear(last_action: str = None):
     print()
 
 
-def print_scene(description: str):
-    print(description)
+def _typewrite(text: str, delay: float = 0.015) -> None:
+    for char in text:
+        print(char, end="", flush=True)
+        time.sleep(delay)
     print()
 
 
-def print_options(options: dict):
+def print_scene(description: str):
+    _typewrite(description)
+    print()
+
+
+def print_options(options: dict, freeform: bool = False):
     print("What do you do?")
     for option in options:
         print(f"  > {option}")
     print("  > stats")
+    if freeform:
+        print("  > or describe your own action...")
     print()
 
 
 def print_check(description: str, roll: int, modifier: int, total: int, dc: int, success: bool):
-    print(f"\n  Rolled: d20 [{roll}] {modifier:+d} = {total}  (DC {dc})")
-    print(f"  Result: {'SUCCESS' if success else 'FAILURE'}\n")
-    time.sleep(2)
+    print("\n  Rolling", end="", flush=True)
+    for _ in range(5):
+        time.sleep(0.14)
+        print(".", end="", flush=True)
+    print("\n")
+
+    for i in range(12):
+        fake = random.randint(1, 20)
+        print(f"\r  d20 [ {fake:2d} ]  ", end="", flush=True)
+        time.sleep(0.06 + i * 0.014)
+
+    print(f"\r  d20 [ {roll:2d} ] {modifier:+d} = {total}  (DC {dc})")
+    time.sleep(0.5)
+    print(f"\n  {'SUCCESS' if success else 'FAILURE'}\n")
+    time.sleep(1.5)
 
 
 def print_character_sheet(character: Character):
