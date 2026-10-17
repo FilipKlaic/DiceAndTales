@@ -1,0 +1,173 @@
+/* Dice & Tales: terminal stylesheet */
+
+Screen {
+    background: $background;
+}
+
+/* --- Title ------------------------------------------------------------ */
+
+#title-box {
+    align: center middle;
+    width: 100%;
+    height: 100%;
+}
+
+#logo, #tagline, #dm-status, #version {
+    width: 100%;
+    text-align: center;
+    content-align: center middle;
+}
+
+#logo { height: auto; }
+#tagline { margin-bottom: 1; color: $text-muted; }
+#dm-status { margin-top: 1; color: $text-muted; }
+#version { color: $text-disabled; }
+
+#title-menu {
+    width: 60;
+    height: auto;
+    max-height: 9;
+    border: round $accent;
+}
+
+/* --- Character creation --------------------------------------------- */
+
+#create {
+    padding: 1 2;
+    height: 1fr;
+}
+
+#create-left {
+    width: 36;
+    margin-right: 2;
+}
+
+#create-left OptionList {
+    height: auto;
+    max-height: 6;
+    border: round $panel-lighten-2;
+}
+
+#create-left OptionList:focus {
+    border: round $accent;
+}
+
+.field-label {
+    margin-top: 1;
+    text-style: bold;
+}
+
+#create-right {
+    width: 1fr;
+    border: round $accent;
+    padding: 0 1;
+}
+
+#preview { height: 1fr; }
+
+#create-buttons {
+    height: auto;
+    align-horizontal: right;
+}
+
+#create-buttons Button { margin-left: 1; }
+
+/* --- Game ------------------------------------------------------------- */
+
+#game { height: 1fr; }
+
+#main {
+    width: 1fr;
+    padding: 0 1;
+}
+
+#log {
+    height: 1fr;
+    border: round $panel-lighten-2;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+}
+
+#log .para { margin-bottom: 1; }
+#log .scene-header { margin-top: 1; }
+#log .notice { color: $text-muted; }
+#log .echo { margin-top: 1; }
+#log .dm { margin-top: 1; }
+#log .banner { margin: 1 0; }
+#log .dice-roll { height: auto; }
+
+.dice-roll.crit {
+    background: $warning 30%;
+}
+
+#thinking {
+    height: 1;
+    color: $accent;
+    text-style: italic;
+}
+
+#choices {
+    height: auto;
+    max-height: 12;
+    border: round $accent;
+}
+
+#choices:disabled { opacity: 60%; }
+
+#action {
+    margin-top: 0;
+}
+
+#sidebar {
+    width: 38;
+    border: round $panel-lighten-2;
+    padding: 0 1;
+}
+
+#enemies {
+    border: round $error;
+    padding: 0 1;
+    margin-bottom: 1;
+    height: auto;
+}
+
+#character {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#character.hurt { background: $error 25%; }
+#character.healed { background: $success 20%; }
+
+#dicelog { height: auto; }
+
+/* --- Dialogs ---------------------------------------------------------- */
+
+Dialog, MenuDialog, SheetDialog, InventoryDialog, JournalDialog, HelpDialog, SettingsDialog, GameOverDialog {
+    align: center middle;
+    background: $background 60%;
+}
+
+#dialog {
+    width: 80;
+    max-width: 95%;
+    height: auto;
+    max-height: 85%;
+    border: round $accent;
+    border-title-style: bold;
+    background: $surface;
+    padding: 1 2;
+}
+
+#dialog VerticalScroll {
+    height: auto;
+    max-height: 30;
+}
+
+#dialog OptionList {
+    height: auto;
+    max-height: 20;
+    margin-top: 1;
+}
+
+.dialog-intro { color: $text-muted; }

@@ -1,0 +1,1023 @@
+# Dice & Tales: The Rusty Flagon
+#
+# Scenes link through `goto`, option/scene `check`s (success/failure) and
+# `encounter`s (victory/flee). Options can be gated with requires_flags,
+# forbids_flags, requires_items, requires_class, requires_race and min_gold.
+# Every flag must be declared in [flags]; the AI Dungeon Master sees these
+# descriptions and may set or clear them too.
+
+[story]
+title = "The Rusty Flagon"
+start = "tavern_entrance"
+setting = """
+A small frontier town at the edge of old forest. Its heart is The Rusty Flagon,
+a smoky tavern run by Hilda, a stout, sharp-eyed barkeep who misses nothing.
+A century-old tomb north of town, built by a war-priest named Brother Aldric,
+has cracked open: the dead are walking and strange lights burn inside. The
+mayor is offering fifty gold to whoever clears it. A hooded stranger named
+Seren, Aldric's grandchild, has waited in the tavern for three nights for
+someone discreet enough to retrieve the iron medallion sealed inside, a relic
+that binds the dead to service at the cost of the wielder's own years.
+"""
+
+[flags]
+hilda_angered = "Hilda is angry with the player and won't help them"
+picked_pocket = "The player has already tried to pick Hilda's pocket"
+took_bounty = "The player accepted the mayor's bounty to clear the tomb"
+seren_deal = "The player agreed to bring the medallion to Seren for gold"
+heard_rumor = "The player overheard the merchants' rumour about the grave robber"
+knows_priest_name = "The player knows the war-priest's true name, Brother Aldric"
+shrine_searched = "The player has examined the roadside shrine"
+skeletons_cleared = "The skeleton guards at the tomb entrance are destroyed"
+alcoves_searched = "The antechamber alcoves have been searched"
+read_inscriptions = "The player has tried to read the antechamber inscriptions"
+crypt_cleared = "The creatures in the crypt hall are dealt with"
+brawl_won = "The player won a tavern brawl"
+
+# ---------------------------------------------------------------- Tavern
+
+[scenes.tavern_entrance]
+title = "The Rusty Flagon"
+art = "tavern"
+safe = true
+text = """
+You push open the heavy oak door of The Rusty Flagon. Smoke and the smell of
+ale hit you at once. A few patrons glance your way before returning to their
+drinks. Behind the bar stands a stout woman who moves with practised
+efficiency. In the far corner, a hooded figure sits alone, an untouched drink
+in front of them.
+"""
+
+  [[scenes.tavern_entrance.variants]]
+  requires_flags = ["brawl_won"]
+  text = "The regulars give you a wide berth now. Someone has mopped most of the blood off the floor."
+
+  [[scenes.tavern_entrance.options]]
+  text = "Approach the bar"
+  goto = "barkeep_chat"
+
+  [[scenes.tavern_entrance.options]]
+  text = "Sit at a table"
+  goto = "table_sit"
+
+  [[scenes.tavern_entrance.options]]
+  text = "Approach the hooded figure"
+  goto = "figure_approach"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.tavern_entrance.options]]
+  text = "Step back outside"
+  goto = "town_road"
+
+[scenes.town_road]
+title = "The Crossroads"
+art = "road"
+text = """
+Cold night air and a sky full of stars. The town is quiet: shuttered shops, a
+dog barking somewhere, the tavern's windows glowing behind you. The north road
+runs off toward the dark line of the forest.
+"""
+
+  [[scenes.town_road.variants]]
+  requires_flags = ["took_bounty"]
+  text = "Hilda's map is folded in your pocket. Half a mile past the mill, she said."
+
+  [[scenes.town_road.options]]
+  text = "Take the north road toward the tomb"
+  goto = "north_road"
+  requires_items = ["tomb_map"]
+
+  [[scenes.town_road.options]]
+  text = "Wander north without directions"
+  check = { ability = "wisdom", skill = "survival", dc = 13, success = "north_road", failure = "lost_in_woods", damage = "1d4", damage_type = "slashing" }
+  forbids_flags = ["took_bounty"]
+
+  [[scenes.town_road.options]]
+  text = "Go back into the tavern"
+  goto = "tavern_entrance"
+
+  [[scenes.town_road.options]]
+  text = "Walk away from all of it"
+  goto = "tavern_leave_early"
+
+[scenes.lost_in_woods]
+title = "Lost"
+art = "road"
+text = """
+The forest swallows the road faster than you expected. Brambles tear at your
+clothes and you go down hard in a ditch you never saw. By the time you find
+the lights of town again your shins are bloody and your pride is worse.
+"""
+on_enter = { journal = "Got lost in the woods north of town. Should have asked for directions." }
+
+  [[scenes.lost_in_woods.options]]
+  text = "Limp back to the tavern"
+  goto = "tavern_entrance"
+
+[scenes.barkeep_chat]
+title = "At the Bar"
+art = "tavern"
+safe = true
+text = """
+The barkeep slides a mug across the counter before you even sit down. "Name's
+Hilda. You look like you've been on the road." She lowers her voice. "There's
+coin to be made if you're the type. Old tomb opened up north of town. Mayor's
+paying fifty gold to whoever clears it out. Undead walking, strange lights:
+the usual sort of trouble."
+"""
+
+  [[scenes.barkeep_chat.variants]]
+  requires_flags = ["hilda_angered"]
+  replace = true
+  text = """
+Hilda doesn't slide you a mug this time. She keeps wiping the same patch of
+counter, eyes on you the whole while. "Something I can do for you," she says
+flatly, "or are you here to rob me again?"
+"""
+
+  [[scenes.barkeep_chat.options]]
+  text = "Ask about the tomb"
+  goto = "tomb_info"
+  forbids_flags = ["hilda_angered"]
+
+  [[scenes.barkeep_chat.options]]
+  text = "Ask about the hooded figure"
+  goto = "figure_info"
+  forbids_flags = ["hilda_angered"]
+
+  [[scenes.barkeep_chat.options]]
+  text = "Apologise and try to make it right"
+  requires_flags = ["hilda_angered"]
+  check = { ability = "charisma", skill = "persuasion", dc = 13, success = "hilda_forgives", failure = "hilda_cold" }
+
+  [[scenes.barkeep_chat.options]]
+  text = "Lift Hilda's coin purse while she's distracted"
+  forbids_flags = ["picked_pocket"]
+  check = { ability = "dexterity", skill = "sleight_of_hand", dc = 14, success = "pickpocket_success", failure = "pickpocket_fail" }
+
+  [[scenes.barkeep_chat.options]]
+  text = "Order another drink and call it a night"
+  goto = "rest_ending"
+
+  [[scenes.barkeep_chat.options]]
+  text = "Step away from the bar"
+  goto = "tavern_entrance"
+
+[scenes.pickpocket_success]
+title = "Light Fingers"
+art = "tavern"
+text = """
+Hilda turns to pull a pint and your hand is in and out of her apron before the
+foam settles. Eight silver-and-copper coins, warm from her pocket. She never
+notices. You feel slightly worse about it than you expected.
+"""
+on_enter = { gold = 8, xp = 25, set_flags = ["picked_pocket"], journal = "Lifted a few coins from Hilda's apron. She didn't notice." }
+
+  [[scenes.pickpocket_success.options]]
+  text = "Ask about the tomb, all innocence"
+  goto = "tomb_info"
+
+  [[scenes.pickpocket_success.options]]
+  text = "Drift back into the room"
+  goto = "tavern_entrance"
+
+[scenes.pickpocket_fail]
+title = "Caught"
+art = "tavern"
+text = """
+Hilda's hand clamps around your wrist like a vice. "Thief!" she bellows. Before
+you can say a word, a bear of a man at the end of the bar lurches off his stool,
+cracking his knuckles. "Allow me, Hilda."
+"""
+on_enter = { set_flags = ["hilda_angered", "picked_pocket"], journal = "Got caught picking Hilda's pocket. She won't forget it." }
+encounter = { enemies = ["tavern_brawler"], victory = "brawl_won", flee = "town_road" }
+
+[scenes.brawl_won]
+title = "Last One Standing"
+art = "tavern"
+text = """
+The brawler hits the floor and stays there, snoring. The tavern is very quiet.
+Hilda looks at the unconscious man, then at you. "Well," she says. "You're
+paying for that stool."
+"""
+on_enter = { set_flags = ["brawl_won"], gold = -2, journal = "Won a fight in the Rusty Flagon. Paid two gold for a broken stool." }
+
+  [[scenes.brawl_won.options]]
+  text = "Return to the bar"
+  goto = "barkeep_chat"
+
+  [[scenes.brawl_won.options]]
+  text = "Get some air"
+  goto = "town_road"
+
+[scenes.hilda_forgives]
+title = "Mended Fences"
+art = "tavern"
+text = """
+You set a coin on the counter and say your piece. Hilda studies you for a long
+moment, then snorts. "Fine. Everyone gets one stupid night." She slides the coin
+back. "Keep it. You'll need it where you're going."
+"""
+on_enter = { clear_flags = ["hilda_angered"], journal = "Hilda forgave me. I owe her." }
+
+  [[scenes.hilda_forgives.options]]
+  text = "Ask about the tomb"
+  goto = "tomb_info"
+
+  [[scenes.hilda_forgives.options]]
+  text = "Ask about the hooded figure"
+  goto = "figure_info"
+
+[scenes.hilda_cold]
+title = "Cold Shoulder"
+art = "tavern"
+text = """
+"Save it," Hilda says, and turns her back on you. Whatever you were going to
+say dies in your throat. The tavern carries on around you, louder than before.
+"""
+
+  [[scenes.hilda_cold.options]]
+  text = "Step away from the bar"
+  goto = "tavern_entrance"
+
+[scenes.tomb_info]
+title = "The War-Priest's Tomb"
+art = "tavern"
+text = """
+Hilda wipes down the bar. "Belonged to some war-priest, century back. Sealed the
+place himself before he died. Nobody knows why it opened now." She slides a
+rough hand-drawn map across the counter. "North road, half a mile past the mill.
+You can't miss the smell." She taps the map. "Fifty gold on completion. Don't go
+in drunk."
+"""
+on_enter = { give_items = ["tomb_map"] }
+
+  [[scenes.tomb_info.options]]
+  text = "Take the quest and head out"
+  goto = "north_road"
+  effects = { set_flags = ["took_bounty"], journal = "Took the mayor's bounty: clear the tomb north of town for fifty gold." }
+
+  [[scenes.tomb_info.options]]
+  text = "Ask about the hooded figure first"
+  goto = "figure_info"
+  effects = { set_flags = ["took_bounty"], journal = "Took the mayor's bounty: clear the tomb north of town for fifty gold." }
+
+  [[scenes.tomb_info.options]]
+  text = "Decline and get some rest"
+  goto = "rest_ending"
+
+[scenes.figure_info]
+title = "The Stranger"
+art = "tavern"
+text = """
+Hilda's expression doesn't change, but her eyes flick toward the corner. "Three
+nights now. Orders water, tips in silver, says nothing. Whatever they're waiting
+for, I haven't figured it out." She refills your mug without asking. "Go say
+hello if you're curious. Worst they do is ignore you."
+"""
+
+  [[scenes.figure_info.options]]
+  text = "Approach the hooded figure"
+  goto = "figure_approach"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.figure_info.options]]
+  text = "Head to the tomb instead"
+  goto = "north_road"
+  requires_items = ["tomb_map"]
+
+  [[scenes.figure_info.options]]
+  text = "Ask about the tomb"
+  goto = "tomb_info"
+  forbids_flags = ["took_bounty"]
+
+  [[scenes.figure_info.options]]
+  text = "Get some rest"
+  goto = "rest_ending"
+
+[scenes.table_sit]
+title = "A Corner Table"
+art = "tavern"
+safe = true
+text = """
+You find a corner table and order stew. It's cheap and filling. From here you
+can watch the whole room: Hilda behind the bar working steadily, a pair of
+merchants arguing quietly near the fire, and the hooded figure in the far corner
+who hasn't moved since you walked in.
+"""
+
+  [[scenes.table_sit.options]]
+  text = "Listen in on the merchants"
+  forbids_flags = ["heard_rumor"]
+  check = { ability = "wisdom", skill = "perception", dc = 11, success = "merchants_rumor", failure = "merchants_nothing" }
+
+  [[scenes.table_sit.options]]
+  text = "Go speak to the barkeep"
+  goto = "barkeep_chat"
+
+  [[scenes.table_sit.options]]
+  text = "Approach the hooded figure"
+  goto = "figure_approach"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.table_sit.options]]
+  text = "Just rest here for the night"
+  goto = "rest_ending"
+
+[scenes.merchants_rumor]
+title = "Loose Talk"
+art = "tavern"
+text = """
+"...swear on my mother," the thinner merchant is saying. "Grave robber went in a
+week back. Came out at dawn, white as milk, screaming the same name over and
+over: Aldric, Aldric. Jumped in the millpond. Never came up." His companion
+makes a sign against evil and changes the subject.
+"""
+on_enter = { set_flags = ["heard_rumor", "knows_priest_name"], xp = 25, journal = "Overheard: a grave robber fled the tomb screaming a name, 'Aldric'." }
+
+  [[scenes.merchants_rumor.options]]
+  text = "Go speak to the barkeep"
+  goto = "barkeep_chat"
+
+  [[scenes.merchants_rumor.options]]
+  text = "Approach the hooded figure"
+  goto = "figure_approach"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.merchants_rumor.options]]
+  text = "Finish your stew"
+  goto = "tavern_entrance"
+
+[scenes.merchants_nothing]
+title = "Idle Chatter"
+art = "tavern"
+text = """
+You catch a few words, something about grain prices and a cousin in the city,
+before a burst of laughter from the bar drowns them out. The merchants lower
+their voices and you lose the thread.
+"""
+on_enter = { set_flags = ["heard_rumor"] }
+
+  [[scenes.merchants_nothing.options]]
+  text = "Go speak to the barkeep"
+  goto = "barkeep_chat"
+
+  [[scenes.merchants_nothing.options]]
+  text = "Approach the hooded figure"
+  goto = "figure_approach"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.merchants_nothing.options]]
+  text = "Finish your stew"
+  goto = "tavern_entrance"
+
+# ------------------------------------------------------- The hooded figure
+
+[scenes.figure_approach]
+title = "The Hooded Figure"
+art = "tavern"
+text = """
+You push back from your seat and start across the room toward the hooded figure.
+The old floorboards shift under your feet...
+"""
+check = { ability = "dexterity", skill = "stealth", dc = 10, success = "figure_success", failure = "figure_fail" }
+
+[scenes.figure_success]
+title = "Silver Eyes"
+art = "tavern"
+text = """
+You reach the table without a sound. The figure lowers their hood to reveal a
+weathered face and silver eyes, and the kind of stillness that comes from long
+practice. "I've been waiting for someone with your particular discretion," they
+say quietly. "There's something in that tomb that cannot fall into the wrong
+hands. Find it. Bring it to me. I will make it worth your time."
+"""
+
+  [[scenes.figure_success.options]]
+  text = "Agree to help"
+  goto = "figure_demand"
+
+  [[scenes.figure_success.options]]
+  text = "Ask what it is"
+  goto = "figure_demand"
+
+  [[scenes.figure_success.options]]
+  text = "Decline and go to the bar"
+  goto = "barkeep_chat"
+
+[scenes.figure_fail]
+title = "Creak"
+art = "tavern"
+text = """
+A floorboard explodes under your foot with a sound like a pistol shot. Every
+head in the tavern swings your way. The hooded figure glances up, utterly
+unsurprised. "Sit down," they say, with the faintest trace of amusement.
+"You'll do anyway."
+"""
+
+  [[scenes.figure_fail.options]]
+  text = "Sit and listen"
+  goto = "figure_success"
+
+  [[scenes.figure_fail.options]]
+  text = "Laugh it off and go to the bar instead"
+  goto = "barkeep_chat"
+
+[scenes.figure_demand]
+title = "Seren's Offer"
+art = "tavern"
+text = """
+The figure folds their hands on the table. "My name is Seren. The war-priest who
+built that tomb was my grandfather. He sealed something inside: a relic that
+binds the dead to service. In the wrong hands, you'd have an army." They set a
+coin purse on the table without counting it. "Fifty gold now. Fifty more when
+you return with it. Don't open it."
+"""
+
+  [[scenes.figure_demand.options]]
+  text = "Accept the purse"
+  goto = "town_road"
+  effects = { gold = 50, give_items = ["tomb_map"], set_flags = ["seren_deal", "knows_priest_name"], journal = "Seren (Aldric's grandchild) paid me 50 gold to bring back an iron medallion from the tomb. 50 more on delivery. Don't open it." }
+
+  [[scenes.figure_demand.options]]
+  text = "Refuse"
+  goto = "barkeep_chat"
+
+# ---------------------------------------------------------------- The road
+
+[scenes.north_road]
+title = "The North Road"
+art = "road"
+text = """
+The road north is rutted and empty. You pass the mill, its wheel creaking in
+the dark, and the trees close in on either side. A little way on, half-hidden in
+the bracken, stands a moss-covered roadside shrine. Beyond it, faintly, you can
+smell something old and wrong.
+"""
+
+  [[scenes.north_road.options]]
+  text = "Continue to the tomb"
+  goto = "tomb_entrance"
+
+  [[scenes.north_road.options]]
+  text = "Examine the shrine"
+  forbids_flags = ["shrine_searched"]
+  check = { ability = "intelligence", skill = "religion", dc = 12, success = "shrine_blessing", failure = "shrine_nothing" }
+
+  [[scenes.north_road.options]]
+  text = "Return to town"
+  goto = "town_road"
+
+[scenes.shrine_blessing]
+title = "The Shrine"
+art = "shrine"
+text = """
+You scrape away the moss. The carving is a sun over a closed eye: a ward against
+the restless dead. Behind a loose stone someone left an offering long ago: a
+dagger, its blade washed in silver and still bright. The inscription beneath
+reads "For Brother Aldric, who kept the dead in their beds."
+"""
+on_enter = { set_flags = ["shrine_searched", "knows_priest_name"], give_items = ["silver_dagger"], xp = 25, journal = "Found a silvered dagger at the roadside shrine, left for 'Brother Aldric, who kept the dead in their beds'." }
+
+  [[scenes.shrine_blessing.options]]
+  text = "Continue to the tomb"
+  goto = "tomb_entrance"
+
+  [[scenes.shrine_blessing.options]]
+  text = "Return to town"
+  goto = "town_road"
+
+[scenes.shrine_nothing]
+title = "The Shrine"
+art = "shrine"
+text = """
+A weathered carving, a few rotted offerings, a name too worn to read. Whatever
+this shrine meant to someone, it keeps its secrets from you.
+"""
+on_enter = { set_flags = ["shrine_searched"] }
+
+  [[scenes.shrine_nothing.options]]
+  text = "Continue to the tomb"
+  goto = "tomb_entrance"
+
+  [[scenes.shrine_nothing.options]]
+  text = "Return to town"
+  goto = "town_road"
+
+# ---------------------------------------------------------------- The tomb
+
+[scenes.tomb_entrance]
+title = "The Tomb Entrance"
+art = "tomb"
+text = """
+The tomb sits at the end of a dirt track, half-swallowed by old growth.
+Torchlight spills from the open entrance. Two skeletal guards turn their hollow
+gaze toward you the moment you clear the treeline. They move fast.
+"""
+
+  [[scenes.tomb_entrance.variants]]
+  requires_flags = ["skeletons_cleared"]
+  replace = true
+  text = """
+Bone dust and broken swords litter the ground before the tomb. Nothing guards
+the entrance now. Cold air breathes up from the stairway below.
+"""
+
+  [[scenes.tomb_entrance.options]]
+  text = "Fight the skeleton guards"
+  forbids_flags = ["skeletons_cleared"]
+  encounter = { enemies = ["skeleton", "skeleton"], victory = "tomb_fight_win", flee = "tomb_retreat" }
+
+  [[scenes.tomb_entrance.options]]
+  text = "Slip past them in the shadows"
+  forbids_flags = ["skeletons_cleared"]
+  check = { ability = "dexterity", skill = "stealth", dc = 13, success = "tomb_antechamber", failure = "tomb_ambushed" }
+
+  [[scenes.tomb_entrance.options]]
+  text = "Descend into the tomb"
+  requires_flags = ["skeletons_cleared"]
+  goto = "tomb_antechamber"
+
+  [[scenes.tomb_entrance.options]]
+  text = "Back away to the road"
+  goto = "north_road"
+
+[scenes.tomb_ambushed]
+title = "Spotted!"
+art = "tomb"
+text = """
+A loose stone skitters under your boot. Both skulls snap toward the sound, and
+the skeletons come at you with rusted swords raised.
+"""
+encounter = { enemies = ["skeleton", "skeleton"], victory = "tomb_fight_win", flee = "tomb_retreat" }
+
+[scenes.tomb_retreat]
+title = "Retreat"
+art = "road"
+text = """
+You scramble back and break their pursuit at the treeline. The skeletons stop at
+the edge of the clearing and wait at the entrance, patient as only the dead can be.
+"""
+
+  [[scenes.tomb_retreat.options]]
+  text = "Return to the tavern and recover"
+  goto = "tavern_entrance"
+
+  [[scenes.tomb_retreat.options]]
+  text = "Grit your teeth and try again"
+  goto = "tomb_entrance"
+
+[scenes.tomb_fight_win]
+title = "Dust to Dust"
+art = "tomb"
+text = """
+The last skeleton crumbles and its sword rings on the stones. The entrance is
+clear. Somewhere below, something pulses with a cold, slow light.
+"""
+on_enter = { set_flags = ["skeletons_cleared"], journal = "Destroyed the skeleton guards at the tomb entrance." }
+
+  [[scenes.tomb_fight_win.options]]
+  text = "Descend into the tomb"
+  goto = "tomb_antechamber"
+
+  [[scenes.tomb_fight_win.options]]
+  text = "Think twice and return to town"
+  goto = "town_road"
+
+[scenes.tomb_antechamber]
+title = "The Antechamber"
+art = "crypt"
+text = """
+The stairs end in a low, vaulted antechamber. Burial alcoves line the walls,
+most of them sealed with crumbling plaster. Above the far archway, lines of
+faded script run around a carved sun that has been deliberately chiselled away.
+From beyond the arch comes a dry, skittering sound.
+"""
+
+  [[scenes.tomb_antechamber.options]]
+  text = "Search the burial alcoves"
+  forbids_flags = ["alcoves_searched"]
+  check = { ability = "intelligence", skill = "investigation", dc = 12, success = "alcove_loot", failure = "alcove_trap", damage = "1d6", damage_type = "piercing" }
+
+  [[scenes.tomb_antechamber.options]]
+  text = "Decipher the inscriptions"
+  forbids_flags = ["read_inscriptions"]
+  check = { ability = "intelligence", skill = "history", dc = 13, success = "inscriptions_read", failure = "inscriptions_fail" }
+
+  [[scenes.tomb_antechamber.options]]
+  text = "Go through the archway"
+  goto = "crypt_hall"
+
+  [[scenes.tomb_antechamber.options]]
+  text = "Climb back to the surface"
+  goto = "tomb_entrance"
+
+[scenes.alcove_loot]
+title = "Grave Goods"
+art = "crypt"
+text = """
+Most alcoves hold only dust, but you notice one whose plaster is newer than the
+rest. Behind it: a dead man's purse and a stoppered vial of something red and
+faintly glowing. Whoever hid them here never came back.
+"""
+on_enter = { set_flags = ["alcoves_searched"], gold = 15, give_items = ["healing_potion"], xp = 25, journal = "Found 15 gold and a healing potion hidden in an alcove." }
+
+  [[scenes.alcove_loot.options]]
+  text = "Return to the antechamber"
+  goto = "tomb_antechamber"
+
+[scenes.alcove_trap]
+title = "Click"
+art = "crypt"
+text = """
+Your fingers find a loose brick, and something goes click. Darts hiss from a slit
+in the wall. One finds you before you can throw yourself clear.
+"""
+on_enter = { set_flags = ["alcoves_searched"] }
+
+  [[scenes.alcove_trap.options]]
+  text = "Return to the antechamber, more carefully"
+  goto = "tomb_antechamber"
+
+[scenes.inscriptions_read]
+title = "The Words on the Wall"
+art = "crypt"
+text = """
+The script is old church cant. You puzzle it out slowly: "Here lies Brother
+Aldric, who bound the dead and was bound in turn. Speak his name and he will
+remember himself." Someone took great pains to chisel away the sun, but not the
+words.
+"""
+on_enter = { set_flags = ["read_inscriptions", "knows_priest_name"], xp = 25, journal = "The inscriptions: 'Speak his name (Brother Aldric) and he will remember himself.'" }
+
+  [[scenes.inscriptions_read.options]]
+  text = "Return to the antechamber"
+  goto = "tomb_antechamber"
+
+[scenes.inscriptions_fail]
+title = "Faded Script"
+art = "crypt"
+text = """
+The letters swim in the torchlight. You make out a few words, "bound" and
+"remember", but the rest is lost to time and damp.
+"""
+on_enter = { set_flags = ["read_inscriptions"] }
+
+  [[scenes.inscriptions_fail.options]]
+  text = "Return to the antechamber"
+  goto = "tomb_antechamber"
+
+[scenes.crypt_hall]
+title = "The Crypt Hall"
+art = "crypt"
+text = """
+A long hall of stone coffins, some with their lids pushed aside. Thick grey webs
+hang between the pillars. Something pale shifts in the webbing overhead, and at
+the far end a shape in rotten burial wrappings sways on its feet, waiting.
+"""
+
+  [[scenes.crypt_hall.variants]]
+  requires_flags = ["crypt_cleared"]
+  replace = true
+  text = """
+The crypt hall is still now. Scorched webbing and broken bodies lie where they
+fell. At the far end, steps lead down toward a cold blue glow.
+"""
+
+  [[scenes.crypt_hall.options]]
+  text = "Fight your way through"
+  forbids_flags = ["crypt_cleared"]
+  encounter = { enemies = ["zombie", "giant_rat"], victory = "crypt_cleared", flee = "tomb_antechamber" }
+
+  [[scenes.crypt_hall.options]]
+  text = "Throw your torch into the webs"
+  forbids_flags = ["crypt_cleared"]
+  requires_items = ["torch"]
+  goto = "crypt_burned"
+  effects = { take_items = ["torch"] }
+
+  [[scenes.crypt_hall.options]]
+  text = "Creep between the coffins"
+  forbids_flags = ["crypt_cleared"]
+  check = { ability = "dexterity", skill = "stealth", dc = 13, success = "tomb_deep", failure = "crypt_ambush" }
+
+  [[scenes.crypt_hall.options]]
+  text = "Go down toward the glow"
+  requires_flags = ["crypt_cleared"]
+  goto = "tomb_deep"
+
+  [[scenes.crypt_hall.options]]
+  text = "Go back to the antechamber"
+  goto = "tomb_antechamber"
+
+[scenes.crypt_burned]
+title = "Fire!"
+art = "crypt"
+text = """
+The webs go up like dry straw. Something shrieks overhead and drops, burning,
+and is still. Through the smoke the wrapped figure lurches toward you,
+smouldering, still coming.
+"""
+encounter = { enemies = ["zombie"], victory = "crypt_cleared", flee = "tomb_antechamber" }
+
+[scenes.crypt_ambush]
+title = "From Above"
+art = "crypt"
+text = """
+A web trembles. You look up straight into a cluster of glittering eyes, and the
+spider drops. At the same moment a rat the size of a dog bursts from an open coffin.
+"""
+encounter = { enemies = ["crypt_spider", "giant_rat"], victory = "crypt_cleared", flee = "tomb_antechamber" }
+
+[scenes.crypt_cleared]
+title = "Silence"
+art = "crypt"
+text = """
+The last of them goes still. You stand in the quiet, breathing hard. At the far
+end of the hall, a stair leads down toward a slow, cold, blue pulse of light.
+"""
+on_enter = { set_flags = ["crypt_cleared"], journal = "Cleared the crypt hall." }
+
+  [[scenes.crypt_cleared.options]]
+  text = "Descend toward the light"
+  goto = "tomb_deep"
+
+  [[scenes.crypt_cleared.options]]
+  text = "Go back to the antechamber"
+  goto = "tomb_antechamber"
+
+[scenes.tomb_deep]
+title = "The Heart of the Tomb"
+art = "chamber"
+text = """
+The staircase leads down into a great stone chamber. Braziers light themselves
+as you enter, one by one. At the centre, on a stone plinth, rests a dark iron
+medallion pulsing with cold light in a slow, irregular rhythm, like breathing.
+A voice rises from everywhere at once: "Leave now. Or join my collection."
+"""
+
+  [[scenes.tomb_deep.options]]
+  text = "Take the medallion"
+  goto = "boss_awakens"
+
+  [[scenes.tomb_deep.options]]
+  text = "Try to reason with the voice"
+  goto = "tomb_parley"
+
+  [[scenes.tomb_deep.options]]
+  text = "Back out of the chamber"
+  goto = "crypt_hall"
+
+[scenes.boss_awakens]
+title = "The Shade Rises"
+art = "chamber"
+text = """
+The braziers flare blue. A translucent figure tears itself up out of the plinth:
+the war-priest, gaunt and hollow-eyed, wrapped in tatters of shadow. "Then
+join," he says, and comes for you.
+"""
+encounter = { enemies = ["priest_shade"], victory = "tomb_victory", flee = "tomb_escape" }
+
+[scenes.tomb_escape]
+title = "Escape"
+art = "crypt"
+text = """
+You run. The shade's howl follows you up the stairs, but it stops at the
+chamber's threshold as if it hit a wall. Whatever binds him to the medallion
+also binds him to that room.
+"""
+
+  [[scenes.tomb_escape.options]]
+  text = "Catch your breath and go back down"
+  goto = "tomb_deep"
+
+  [[scenes.tomb_escape.options]]
+  text = "Leave the tomb"
+  goto = "north_road"
+
+[scenes.tomb_parley]
+title = "Brother Aldric"
+art = "chamber"
+text = """
+You call out that you want to talk. Silence. Then a translucent figure rises
+from the plinth: the war-priest, ancient and hollow-eyed, wearing the expression
+of someone who has had a very long time to be disappointed by the living. "You
+speak when you could act." He regards you. "Unusual. Say what you came to say."
+"""
+
+  [[scenes.tomb_parley.options]]
+  text = "Hear him out"
+  goto = "tomb_deal"
+
+  [[scenes.tomb_parley.options]]
+  text = "Speak his name: \"Brother Aldric. Remember yourself.\""
+  requires_flags = ["knows_priest_name"]
+  goto = "aldric_named"
+
+  [[scenes.tomb_parley.options]]
+  text = "Snatch the medallion while he's distracted"
+  check = { ability = "dexterity", skill = "sleight_of_hand", dc = 15, success = "tomb_victory", failure = "boss_awakens" }
+
+  [[scenes.tomb_parley.options]]
+  text = "Back away slowly"
+  goto = "crypt_hall"
+
+[scenes.tomb_deal]
+title = "The Price"
+art = "chamber"
+text = """
+The war-priest speaks slowly, as if translating from a language he barely
+remembers. The medallion was never meant to be wielded. It costs exactly what
+it grants: control over the dead, paid for in years of your own life. "Tell
+whoever sent you that it is gone," he says. "That is the kinder truth." You
+believe him.
+"""
+
+  [[scenes.tomb_deal.options]]
+  text = "Agree, and leave empty-handed"
+  requires_flags = ["seren_deal"]
+  goto = "peaceful_ending"
+
+  [[scenes.tomb_deal.options]]
+  text = "Agree, and leave empty-handed"
+  forbids_flags = ["seren_deal"]
+  goto = "peaceful_ending_alone"
+
+  [[scenes.tomb_deal.options]]
+  text = "Take the medallion anyway"
+  goto = "boss_awakens"
+
+[scenes.aldric_named]
+title = "He Remembers"
+art = "chamber"
+text = """
+At the sound of his name the shade goes utterly still. The shadow-tatters fall
+away from him like ash, and for a moment you see a tired old man in a priest's
+robes. "Aldric," he whispers. "Yes. I bound them to keep them safe, and then I
+could not let go." He looks at the medallion. "It can be broken. Not by me.
+By the living."
+"""
+on_enter = { xp = 50 }
+
+  [[scenes.aldric_named.options]]
+  text = "Break the medallion and set him free"
+  requires_flags = ["took_bounty"]
+  goto = "rest_eternal_ending"
+
+  [[scenes.aldric_named.options]]
+  text = "Break the medallion and set him free"
+  forbids_flags = ["took_bounty"]
+  goto = "rest_eternal_unpaid"
+
+  [[scenes.aldric_named.options]]
+  text = "Leave it sealed and walk away"
+  requires_flags = ["seren_deal"]
+  goto = "peaceful_ending"
+
+  [[scenes.aldric_named.options]]
+  text = "Leave it sealed and walk away"
+  forbids_flags = ["seren_deal"]
+  goto = "peaceful_ending_alone"
+
+  [[scenes.aldric_named.options]]
+  text = "Take it for yourself"
+  goto = "boss_awakens"
+
+[scenes.tomb_victory]
+title = "The Medallion"
+art = "chamber"
+text = """
+You close your hand around the medallion. The chamber shakes. The war-priest's
+form tears apart with a sound like paper, and the braziers go dark all at once.
+You run. Outside, the tomb doors grind shut behind you, and the night is
+suddenly very quiet.
+"""
+on_enter = { give_items = ["medallion"], xp = 50, journal = "Took the iron medallion. The tomb sealed itself behind me." }
+
+  [[scenes.tomb_victory.options]]
+  text = "Bring the medallion to Seren"
+  goto = "victory_figure_ending"
+  requires_flags = ["seren_deal"]
+
+  [[scenes.tomb_victory.options]]
+  text = "Find the hooded stranger and sell it"
+  goto = "victory_sold_ending"
+  forbids_flags = ["seren_deal"]
+
+  [[scenes.tomb_victory.options]]
+  text = "Keep it and disappear"
+  goto = "victory_keep_ending"
+
+# ---------------------------------------------------------------- Endings
+
+[scenes.peaceful_ending]
+title = "The Kinder Truth"
+art = "ending"
+ending = "The Kinder Truth"
+text = """
+You walk out of the tomb with nothing but information. Back at The Rusty Flagon,
+Seren listens in silence, then places another fifty gold on the table anyway.
+"That's more than I hoped for," they say, and mean it. They're gone before you
+finish your drink. You sit alone with coin in your pocket and no idea what any
+of it meant. It's enough.
+"""
+on_enter = { gold = 50, xp = 100 }
+
+[scenes.peaceful_ending_alone]
+title = "The Kinder Truth"
+art = "ending"
+ending = "The Kinder Truth"
+text = """
+You walk out of the tomb with nothing but information and the war-priest's
+warning. Nobody pays you for a door left shut. But on the walk back to town the
+night feels a little lighter, and when the hooded stranger in the tavern catches
+your eye, they nod once, as if they already know. It's enough.
+"""
+on_enter = { xp = 100 }
+
+[scenes.rest_eternal_ending]
+title = "Rest Eternal"
+art = "ending"
+ending = "Rest Eternal"
+text = """
+You bring the medallion down on the plinth's edge. It cracks like ice, and a
+sound goes out through the earth, a long, slow sigh. Brother Aldric smiles,
+just once, and is gone. Up above, all through the forest, the dead lie down.
+When you return to town the mayor pays the bounty without a word; the look on
+your face is answer enough. Seren, when you tell them, closes their silver eyes
+and says only, "Thank you. He was tired."
+"""
+on_enter = { gold = 50, xp = 150 }
+
+[scenes.rest_eternal_unpaid]
+title = "Rest Eternal"
+art = "ending"
+ending = "Rest Eternal"
+text = """
+You bring the medallion down on the plinth's edge. It cracks like ice, and a
+sound goes out through the earth, a long, slow sigh. Brother Aldric smiles,
+just once, and is gone. Up above, all through the forest, the dead lie down.
+You never did take the mayor's bounty, and nobody in town will ever know what
+you did tonight. Somehow, that feels right.
+"""
+on_enter = { xp = 150 }
+
+[scenes.victory_figure_ending]
+title = "Into Other Hands"
+art = "ending"
+ending = "Into Other Hands"
+text = """
+Seren takes the wrapped medallion and sets it in a lead-lined box they already
+had waiting. They count out the promised fifty and push it across the table.
+"You did well." They're gone within the hour. You sit for a long time
+afterward, wondering what exactly you handed over, and to whom.
+"""
+on_enter = { gold = 50, xp = 100, take_items = ["medallion"] }
+
+[scenes.victory_sold_ending]
+title = "Into Other Hands"
+art = "ending"
+ending = "Into Other Hands"
+text = """
+The hooded stranger's silver eyes widen when you set the medallion on the table.
+They set it in a lead-lined box they already had waiting, then count out a
+hundred gold without haggling. "You have no idea what this is," they say. "Good."
+They're gone within the hour. You sit for a long time afterward, wondering what
+exactly you sold, and to whom.
+"""
+on_enter = { gold = 100, xp = 100, take_items = ["medallion"] }
+
+[scenes.victory_keep_ending]
+title = "Company in the Dark"
+art = "ending"
+ending = "Company in the Dark"
+victory = false
+text = """
+Three days out of town, the medallion starts humming at night. On the fourth
+night a voice, the war-priest's, speaks from the dark beside your bedroll:
+"You didn't listen." You're not sure if that's a curse, a warning, or just
+company. Either way, you're not sleeping again tonight. Possibly not ever.
+"""
+
+[scenes.rest_ending]
+title = "A Real Bed"
+art = "ending"
+ending = "A Real Bed"
+text = """
+You rent a room upstairs and sleep in a real bed for the first time in weeks.
+Whatever the tomb holds, and whatever the hooded figure wanted, it can wait.
+The dead aren't going anywhere. Probably. You sleep well, which feels like a
+victory of its own.
+"""
+
+[scenes.tavern_leave_early]
+title = "The Road Not Taken"
+art = "ending"
+ending = "The Road Not Taken"
+victory = false
+text = """
+You step out into the cold night and keep walking. Inside, someone was willing
+to pay for your help, and someone else was waiting to offer a quest. You'll
+never know which would have been worth more. Some stories don't start because
+the hero walks past the door.
+"""

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dice-and-tales"
+version = "0.2.0"
+description = "A terminal D&D-style adventure where an AI Dungeon Master improvises inside real dice rules."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Filip Klaic" }]
+dependencies = [
+    "anthropic>=1.15,<2",
+    "textual>=8.2,<9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[project.scripts]
+dice-and-tales = "dice_and_tales.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dice_and_tales"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

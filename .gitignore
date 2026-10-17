@@ -7,3 +7,6 @@ dist/
 build/
 *.egg-info/
 .env
+.pytest_cache/
+.uv-cache/
+*.svg.png
